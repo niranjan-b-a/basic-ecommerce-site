@@ -46,6 +46,11 @@ app.get('/', async (req, res) => {
     const products = await Product.find();
     res.render('index', { products });
 })
+//*************PRODUCT-DETAILS***************//
+app.get('/:id', async (req, res) => {
+    const product = await Product.findById(req.params.id);
+    res.render('product-details',{product});
+})
 
 //*************ADMIN****************//
 app.get('/admin',(req, res)=> {
