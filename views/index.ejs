@@ -19,8 +19,8 @@
 									<button type="button" class="btn btn-default get">Get it now</button>
 								</div>
 								<div class="col-sm-6">
-									<img src="images/home/girl1.jpg" class="girl img-responsive" alt="" />
-									<img src="images/home/pricing.png"  class="pricing" alt="" />
+									<img src="/images/home/girl1.jpg" class="girl img-responsive" alt="" />
+									<img src="/images/home/pricing.png"  class="pricing" alt="" />
 								</div>
 							</div>
 							<div class="item">
@@ -31,8 +31,8 @@
 									<button type="button" class="btn btn-default get">Get it now</button>
 								</div>
 								<div class="col-sm-6">
-									<img src="images/home/girl2.jpg" class="girl img-responsive" alt="" />
-									<img src="images/home/pricing.png"  class="pricing" alt="" />
+									<img src="/images/home/girl2.jpg" class="girl img-responsive" alt="" />
+									<img src="/images/home/pricing.png"  class="pricing" alt="" />
 								</div>
 							</div>
 							
@@ -44,8 +44,8 @@
 									<button type="button" class="btn btn-default get">Get it now</button>
 								</div>
 								<div class="col-sm-6">
-									<img src="images/home/girl3.jpg" class="girl img-responsive" alt="" />
-									<img src="images/home/pricing.png" class="pricing" alt="" />
+									<img src="/images/home/girl3.jpg" class="girl img-responsive" alt="" />
+									<img src="/images/home/pricing.png" class="pricing" alt="" />
 								</div>
 							</div>
 							
@@ -66,7 +66,7 @@
 
 	<section id="advertisement">
 		<div class="container">
-			<img src="images/shop/advertisement.jpg" alt="" />
+			<img src="/images/shop/advertisement.jpg" alt="" />
 		</div>
 	</section>
 	
@@ -77,12 +77,12 @@
 					<div class="features_items"><!--features_items-->
 						<h2 class="title text-center">Features Items</h2>
 						<% for(product of products){ %> 
-							<a href="/<%= product._id %> ">
+							<a href="/product-details/<%= product._id %> ">
 								<div class="col-sm-4">
 									<div class="product-image-wrapper">
 										<div class="single-products">
 											<div class="productinfo text-center">
-												<img src="images/uploads/<%= product.image %>" alt="" />
+												<img src="/images/uploads/<%= product.image %>" alt="product image" />
 												<h2>$<%= product.price %> </h2>
 												<p><%= product.title %> </p>
 												<a href="#" class="btn btn-default add-to-cart"><i class="fa fa-shopping-cart"></i>Add to cart</a>

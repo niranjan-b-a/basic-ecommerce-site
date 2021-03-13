@@ -7,6 +7,9 @@ const methodOverride = require('method-override');
 const multer = require('multer');
 const Product = require('./models/shop.js');
 const { request } = require('http');
+const catchAsync = require('./utils/catchAsync.js');
+const ExpressError = require('./utils/expressError.js');
+
 
 mongoose.connect('mongodb://localhost:27017/tenzify', { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {
@@ -46,26 +49,21 @@ app.get('/', async (req, res) => {
     const products = await Product.find();
     res.render('index', { products });
 })
-//*************PRODUCT-DETAILS***************//
-app.get('/:id', async (req, res) => {
-    const product = await Product.findById(req.params.id);
-    res.render('product-details',{product});
-})
 
 //*************ADMIN****************//
 app.get('/admin',(req, res)=> {
     res.render('admin')
 })
-app.post("/add-product", upload.single('image'), async (req, res) => {
-    const product = new Product({
-        title: req.body.title,
-        price: req.body.price,
-        description: req.body.description,
-        image: (req.file.filename).toString()
-    })
-    await product.save()
-    res.send('hhit');
-});
+app.post("/add-product", upload.single('image'), catchAsync(async (req, res, next) => {
+    if (!req.body) throw new ExpressError('Invalid Product Data', 500);
+        const product = new Product({
+            title: req.body.title,
+            price: req.body.price,
+            description: req.body.description,
+            image: (req.file.filename).toString()
+        })
+        await product.save();
+}))
 
 //**********LOGIN*************//
 app.get('/login', (req, res) => {
@@ -82,19 +80,26 @@ app.get('/checkout', (req, res) => {
     res.render('checkout');
 })
 
-//****************PRODUCT-DETALIS*****************//
-app.get('/product-details', (req, res)=>{
-    res.render('product-details')
-})
-
 //**********CONTACT-US*************//
 app.get('/contact', (req, res) => {
     res.render('contact-us');
 })
 
-//**********ERROR*************//
-app.get('/*', (req, res) => {
-    res.render('404');
+//*************PRODUCT-DETAILS***************//
+app.get('/product-details/:id', catchAsync( async (req, res) => {
+    const product = await Product.findById(req.params.id);
+    res.render('product-details',{product});
+}))
+//************CATCHING ERROR************//
+app.all('/*', (req, res, next) => {
+    next(new ExpressError('Page Not Found',404))
+})
+
+app.use((err, req, res, next) => {
+    const { statusCode = 500 } = err;
+    if (!err.message) err.message = 'Something Went Wrong';
+    res.render('404', { err });
+    res.status(statusCode);
 })
 
 
