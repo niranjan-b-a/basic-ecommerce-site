@@ -12,7 +12,7 @@ const addProductSchema = new mongoose.Schema({
         require
     },
     description: String,
-    image: String
+    image: [{type: String}]
 }
 )
 

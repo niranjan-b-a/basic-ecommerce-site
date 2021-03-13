@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>Tenzify - product.title</title>
+    <title>Tenzify - <%= product.title %></title>
     <link type="text/css" href="/css/bootstrap.min.css" rel="stylesheet">
     <link type="text/css" href="/css/font-awesome.min.css" rel="stylesheet">
     <link type="text/css" href="/css/prettyPhoto.css" rel="stylesheet">
@@ -87,13 +87,18 @@
 					<div class="product-details"><!--product-details-->
 						<div class="col-sm-5">
 							<div class="view-product">
-								<img src="/images/uploads/<%= product.image %> " alt="product-image" />
+								<img class="display" src="/images/uploads/<%= product.image[0] %> " alt="product-image" />
 							</div>
 							<div id="similar-product" class="carousel slide" data-ride="carousel">
 								
 								  <!-- Wrapper for slides -->
 								    <div class="carousel-inner">
-										<div class="item active">
+										<div class="item active anchors">
+										  <a><img class="image1" src="/images/uploads/<%= product.image[1] %>" alt=""></a>
+										  <a><img class="image2" src="/images/uploads/<%= product.image[2] %>" alt=""></a>
+										  <a><img src="/images/uploads/<%= product.image[0] %>" alt=""></a>
+										</div>
+										<!-- <div class="item">
 										  <a href=""><img src="/images/product-details/similar1.jpg" alt=""></a>
 										  <a href=""><img src="/images/product-details/similar2.jpg" alt=""></a>
 										  <a href=""><img src="/images/product-details/similar3.jpg" alt=""></a>
@@ -102,22 +107,17 @@
 										  <a href=""><img src="/images/product-details/similar1.jpg" alt=""></a>
 										  <a href=""><img src="/images/product-details/similar2.jpg" alt=""></a>
 										  <a href=""><img src="/images/product-details/similar3.jpg" alt=""></a>
-										</div>
-										<div class="item">
-										  <a href=""><img src="/images/product-details/similar1.jpg" alt=""></a>
-										  <a href=""><img src="/images/product-details/similar2.jpg" alt=""></a>
-										  <a href=""><img src="/images/product-details/similar3.jpg" alt=""></a>
-										</div>
+										</div> -->
 										
 									</div>
-
-								  <!-- Controls -->
+<!-- 
+								   Controls
 								  <a class="left item-control" href="#similar-product" data-slide="prev">
 									<i class="fa fa-angle-left"></i>
 								  </a>
 								  <a class="right item-control" href="#similar-product" data-slide="next">
 									<i class="fa fa-angle-right"></i>
-								  </a>
+								  </a> -->
 							</div>
 
 						</div>
@@ -427,4 +427,15 @@
 			</div>
 		</div>
 	</section>
+	<script>
+		const anchors = document.querySelectorAll('.anchors a img');
+		anchors.forEach(anchor=>{
+			anchor.addEventListener('click',e=>{
+				const mainImg = document.querySelector('.display');
+				const swap = anchor.src;
+				anchor.src = mainImg.src;
+				mainImg.src = swap;
+			})
+		})
+	</script>
 	<%- include('partials/footer') %>

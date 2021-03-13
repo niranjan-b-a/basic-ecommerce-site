@@ -899,7 +899,6 @@ h2.title {
   transition: height 500ms ease 0s;
   width: 100%;
   display: block;
-  opacity:;
 }
 
 .single-products:hover .product-overlay {
@@ -1191,7 +1190,8 @@ h2.title {
 }
 
 #similar-product .carousel-inner .item{
-	padding-left:0px;
+	padding-left:20px;
+  display: flex;
 }
 
 #similar-product .carousel-inner .item img {
@@ -1243,7 +1243,6 @@ h2.title {
 }
 
 .product-information span {
-  display: inline-block;
   margin-bottom: 8px;
   margin-top: 18px;
 }

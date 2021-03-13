@@ -519,10 +519,18 @@ ul.sub-menu{
 	float: none;
 }
 
-#similar-product .carousel-inner .item img{
-	margin-left: 4px;
+#similar-product .carousel-inner .item img {
+    margin-left: 4px;
+    width: 30%;
+    border: solid 1px;
 }
-
+.item-control i {
+    background: #FE980F;
+    color: #FFFFFF;
+    font-size: 20px;
+    padding: 5px 10px;
+    display: none;
+}
 .product-information{
 	margin-top: 40px;
 }

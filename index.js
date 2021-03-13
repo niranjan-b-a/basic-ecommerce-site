@@ -54,16 +54,17 @@ app.get('/', async (req, res) => {
 app.get('/admin',(req, res)=> {
     res.render('admin')
 })
-app.post("/add-product", upload.single('image'), catchAsync(async (req, res, next) => {
+app.post("/add-product", upload.array('image', 12), catchAsync(async (req, res, next) => {
     if (!req.body) throw new ExpressError('Invalid Product Data', 500);
-        const product = new Product({
-            title: req.body.title,
-            price: req.body.price,
-            description: req.body.description,
-            image: (req.file.filename).toString()
-        })
+    const files = req.files
+    const product = new Product({
+        title: req.body.title,
+        price: req.body.price,
+        description: req.body.description,
+        image: files.map(file => {return file.filename })
+    })    
     await product.save();
-    res.render('/admin');
+    res.render('admin');
 }))
 
 //**********LOGIN*************//
