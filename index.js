@@ -62,7 +62,8 @@ app.post("/add-product", upload.single('image'), catchAsync(async (req, res, nex
             description: req.body.description,
             image: (req.file.filename).toString()
         })
-        await product.save();
+    await product.save();
+    res.render('/admin');
 }))
 
 //**********LOGIN*************//
