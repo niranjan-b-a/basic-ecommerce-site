@@ -200,7 +200,14 @@
 .bill-to .form-one input{
 	width: 20em;
 }
-
+.padding-right {
+    padding-right: 0;
+    padding: 0px;
+}
+#similar-product .carousel-inner .item {
+    padding: 0px;
+    display: flex;
+}
 
 .mainmenu ul li{
 	background: rgba(0, 0, 0, 0.5);
@@ -521,7 +528,7 @@ ul.sub-menu{
 
 #similar-product .carousel-inner .item img {
     margin-left: 4px;
-    width: 30%;
+    width: 90%;
     border: solid 1px;
 }
 .item-control i {

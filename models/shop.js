@@ -1,8 +1,10 @@
 // CREATING MODEL FOR SHOP PAGE OR HOME PAGE TO ADD PRODUCT
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const Review = require('./review');
 
 
-const addProductSchema = new mongoose.Schema({
+const addProductSchema = new Schema({
     title: {
         type: String,
         require : true
@@ -12,7 +14,13 @@ const addProductSchema = new mongoose.Schema({
         require
     },
     description: String,
-    image: [{type: String}]
+    image: [{ type: String }],
+    reviews: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Review"
+        }
+    ]
 }
 )
 

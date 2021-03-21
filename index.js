@@ -9,6 +9,8 @@ const Product = require('./models/shop.js');
 const { request } = require('http');
 const catchAsync = require('./utils/catchAsync.js');
 const ExpressError = require('./utils/expressError.js');
+const Review = require('./models/review');
+const { reviewSchema } = require('./schemas');
 
 
 mongoose.connect('mongodb://localhost:27017/tenzify', { useNewUrlParser: true, useUnifiedTopology: true })
@@ -44,6 +46,17 @@ let storage = multer.diskStorage({
 const upload = multer({
     storage: storage
 })
+
+//validate function
+const validateReview = (req, res, next) => {
+    const { error } = reviewSchema.validate(req.body);
+    if (error) {
+        const msg = error.details.map(el => el.message).join(',');
+        throw new ExpressError(msg, 400);
+    } else {
+        next();
+    }
+}
 
 app.get('/', async (req, res) => {
     const products = await Product.find();
@@ -89,9 +102,26 @@ app.get('/contact', (req, res) => {
 
 //*************PRODUCT-DETAILS***************//
 app.get('/product-details/:id', catchAsync( async (req, res) => {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('reviews');
     res.render('product-details',{product});
 }))
+//***************REVIEWS*****************/
+app.post('/product-details/:id/review',validateReview, catchAsync(async (req, res) => {
+    const product = await Product.findById(req.params.id);
+    const review = new Review(req.body.review);
+    product.reviews.push(review);
+    await review.save();
+    await product.save();
+    res.redirect(`/product-details/${product._id}`)
+}))
+//***************DELETE REVIEW *************/
+app.delete('/product-details/:id/review/:reviewId', catchAsync(async (req, res, next) => {
+    const { id, reviewId } = req.params;
+    await Product.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
+    await Review.findByIdAndDelete(reviewId);
+    res.redirect(`/product-details/${id}`);
+}))
+
 //************CATCHING ERROR************//
 app.all('/*', (req, res, next) => {
     next(new ExpressError('Page Not Found',404))
