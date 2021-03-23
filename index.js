@@ -10,7 +10,13 @@ const { request } = require('http');
 const catchAsync = require('./utils/catchAsync.js');
 const ExpressError = require('./utils/expressError.js');
 const Review = require('./models/review');
-const { reviewSchema } = require('./schemas');
+const session = require('express-session');
+const flash = require('connect-flash');
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+const User = require('./models/user');
+const cookieParser = require('cookie-parser');
+const { isLoggedIn, isAuthor, validateReview, isReviewAuthor } = require('./middleware');
 
 
 mongoose.connect('mongodb://localhost:27017/tenzify', { useNewUrlParser: true, useUnifiedTopology: true })
@@ -31,6 +37,35 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(methodOverride('_method'));
 
+const sessionConfig = {
+    secret: "changethislater",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        httpOnly: true,
+        expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+    }
+}
+
+app.use(session(sessionConfig));
+app.use(flash());
+
+app.use(cookieParser());
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate({usernameField: 'email'})));
+
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+app.use((req, res, next) => {
+    res.locals.currentUser = req.user;
+    res.locals.error = req.flash('error');
+    res.locals.success = req.flash('success');
+    next();
+})
+
 //define storage for the image
 
 let storage = multer.diskStorage({
@@ -47,44 +82,68 @@ const upload = multer({
     storage: storage
 })
 
-//validate function
-const validateReview = (req, res, next) => {
-    const { error } = reviewSchema.validate(req.body);
-    if (error) {
-        const msg = error.details.map(el => el.message).join(',');
-        throw new ExpressError(msg, 400);
-    } else {
-        next();
-    }
-}
-
 app.get('/', async (req, res) => {
     const products = await Product.find();
     res.render('index', { products });
 })
 
 //*************ADMIN****************//
-app.get('/admin',(req, res)=> {
-    res.render('admin')
+app.get('/admin', isLoggedIn, (req, res) => {
+    if (req.user.email === 'niranjangowda821@gmail.com') {
+        return res.render('admin')   
+    }
+    req.flash('error','you are not authorized')
+    res.redirect('/');
 })
-app.post("/add-product", upload.array('image', 12), catchAsync(async (req, res, next) => {
+app.post("/add-product", isLoggedIn,upload.array('image', 12), catchAsync(async (req, res, next) => {
     if (!req.body) throw new ExpressError('Invalid Product Data', 500);
     const files = req.files
     const product = new Product({
         title: req.body.title,
         price: req.body.price,
         description: req.body.description,
+        author: req.user._id,
         image: files.map(file => {return file.filename })
     })    
     await product.save();
     res.render('admin');
 }))
 
-//**********LOGIN*************//
+//**********REGISTER AND LOGIN*************//
 app.get('/login', (req, res) => {
     res.render('login');
 })
 
+app.post('/register', catchAsync(async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+        const user = new User({ email, username });
+        const registerUser = await User.register(user, password);
+        req.login(registerUser, err => {
+            if (err) {
+                return next(err);
+            }
+            res.redirect('/')
+            req.flash('success',req.user.username)
+        })
+    } catch (e) {
+        console.log(e)
+        req.flash('error', e.message);
+        res.redirect('/login');
+    }
+}))
+
+app.post('/login', passport.authenticate('local', { failureFlash: true, failureRedirect: '/login' }), (req, res) => {
+    req.flash('success', 'Welcome Back')
+    const redirectUrl = req.session.returnUrl || '/';
+    delete req.session.returnUrl;
+    res.redirect(redirectUrl);
+})
+
+app.get('/logout', isLoggedIn, (req, res) => {
+    req.logout();
+    res.redirect('/');
+})
 //**********CART*************//
 app.get('/cart', (req, res) => {
     res.render('cart');
@@ -96,26 +155,35 @@ app.get('/checkout', (req, res) => {
 })
 
 //**********CONTACT-US*************//
-app.get('/contact', (req, res) => {
+app.get('/contact-us', (req, res) => {
     res.render('contact-us');
+    console.log(req.user);
 })
 
 //*************PRODUCT-DETAILS***************//
 app.get('/product-details/:id', catchAsync( async (req, res) => {
-    const product = await Product.findById(req.params.id).populate('reviews');
+    const product = await Product.findById(req.params.id).populate({ path: 'reviews', populate: {path: 'author'}}).populate('author');
     res.render('product-details',{product});
 }))
+    //DELETE-PRODUCT//
+app.delete('/product/:id/delete',isLoggedIn,isAuthor, catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    await Product.findByIdAndDelete(id);
+    res.redirect(`/`);
+}))
+
 //***************REVIEWS*****************/
-app.post('/product-details/:id/review',validateReview, catchAsync(async (req, res) => {
+app.post('/product-details/:id/review',isLoggedIn, isReviewAuthor, validateReview, catchAsync(async (req, res) => {
     const product = await Product.findById(req.params.id);
     const review = new Review(req.body.review);
+    review.author = req.user._id;
     product.reviews.push(review);
     await review.save();
     await product.save();
     res.redirect(`/product-details/${product._id}`)
 }))
-//***************DELETE REVIEW *************/
-app.delete('/product-details/:id/review/:reviewId', catchAsync(async (req, res, next) => {
+    //DELETE REVIEW /
+app.delete('/product-details/:id/review/:reviewId',isLoggedIn, catchAsync(async (req, res, next) => {
     const { id, reviewId } = req.params;
     await Product.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
     await Review.findByIdAndDelete(reviewId);

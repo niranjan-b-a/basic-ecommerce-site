@@ -10,11 +10,11 @@
 				<div class="col-sm-4 col-sm-offset-1">
 					<div class="login-form"><!--login form-->
 						<h2>Login to your account</h2>
-						<form action="#">
-							<input type="text" placeholder="Name" required>
-							<input type="email" placeholder="Email Address" required>
+						<form action="/login" method="POST">
+							<input name="username" type="email" placeholder="Email Address" required>
+							<input type="password" placeholder="password" name="password" required>
 							<span>
-								<input type="checkbox" class="checkbox"> 
+								<input type="checkbox" class="checkbox" checked> 
 								Keep me signed in
 							</span>
 							<button type="submit" class="btn btn-default">Login</button>
@@ -27,10 +27,10 @@
 				<div class="col-sm-4">
 					<div class="signup-form"><!--sign up form-->
 						<h2>New User Signup!</h2>
-						<form action="#">
-							<input type="text" placeholder="Name" required>
-							<input type="email" placeholder="Email Address" required>
-							<input type="password" placeholder="Password" required>
+						<form action="/register" method="POST">
+							<input name="username" type="text" placeholder="Name" required>
+							<input name="email" type="email" placeholder="Email Address" required>
+							<input name="password" type="password" placeholder="Password" required>
 							<button type="submit" class="btn btn-default">Signup</button>
 						</form>
 					</div><!--/sign up form-->

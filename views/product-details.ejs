@@ -37,7 +37,11 @@
 								<li><a href="#"><i class="fa fa-star"></i> Wishlist</a></li>
 								<li><a href="checkout.html"><i class="fa fa-crosshairs"></i> Checkout</a></li> -->
 								<li><a href="/cart"><i class="fa fa-shopping-cart"></i> Cart</a></li>
+								<% if(!currentUser){ %> 
 								<li><a href="/login"><i class="fa fa-lock"></i> Login</a></li>
+								<% }else{ %> 
+								<li><a href="/logout"><i class="fa fa-sign-out" aria-hidden="true"></i> Logout</a></li>
+								<% } %> 
 							</ul>
 						</div>
 					</div>
@@ -136,6 +140,11 @@
 										<i class="fa fa-shopping-cart"></i>
 										Add to cart
 									</button>
+									<% if(currentUser && product.author.equals(currentUser._id)) {%>
+										<form action="/product/<%= product._id %>/delete?_method=DELETE " method="POST">
+											<button class="btn btn-sm btn-danger"><i class="fa fa-trash-o fa-lg"> Delete</i></button>
+										</form>
+										<% } %> 
 								</span>
 								<p><b>Availability:</b> In Stock</p>
 								<p><b>Condition:</b> New</p>
@@ -314,14 +323,16 @@
 										<li><a href=""><i class="fa fa-calendar-o"></i>31 DEC 2014</a></li>
 									</ul>
 									<p>Review - <%= review.body %>. Rating - <%= review.rating %></p>
+									<% if(currentUser && (review.author.equals(currentUser._id) || currentUser.email == 'niranjangowda821@gmail.com')){ %> 
 									<form action="/product-details/<%= product._id %>/review/<%= review._id %>?_method=DELETE" method="POST">
-										<button class="btn btn-sm btn-danger">delete</button>
+										<button class="btn btn-sm btn-danger"><i class="fa fa-trash-o fa-lg"> Delete</i></button>
 									</form>
+									<% } %> 
 									<% } %> 
 									<hr>
 									<br>
-									<p><b>Write Your Review</b></p>
-									
+									<% if(currentUser){ %> 
+										<p><b>Write Your Review</b></p>
 									<form action="/product-details/<%= product._id %>/review" method="POST">
 										<span>
 											<input type="text" placeholder="Your Name" name="review[name]" required>
@@ -333,6 +344,7 @@
 											Submit
 										</button>
 									</form>
+									<% } %> 
 								</div>
 							</div>
 							
