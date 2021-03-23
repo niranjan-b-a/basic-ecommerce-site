@@ -1,0 +1,43 @@
+const { reviewSchema } = require('./schemas');
+const ExpressError = require('./utils/expressError');
+const Product = require('./models/shop');
+const Review = require('./models/review');
+
+module.exports.isLoggedIn = (req, res, next) => {
+    if (!req.isAuthenticated()) {
+        console.log(req.originalUrl);
+        req.session.returnUrl = req.originalUrl;
+        req.flash('error', 'you must login first');
+        return res.redirect('/login');
+    }
+    next();
+}
+//validate function
+module.exports.validateReview = (req, res, next) => {
+    const { error } = reviewSchema.validate(req.body);
+    if (error) {
+        const msg = error.details.map(el => el.message).join(',');
+        throw new ExpressError(msg, 400);
+    } else {
+        next();
+    }
+}
+
+module.exports.isAuthor = async (req,res,next) => {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+    if (!product.author.equals(req.user._id)){
+        req.flash('error', 'You are not authorized');
+        res.redirect('/')
+    }
+    next();
+}
+module.exports.isReviewAuthor = async (req, res, next) => {
+    const { id,reviewId } = req.params;
+    const review = await Review.findById(reviewId);
+    if (!review.author.equals(req.user._id)) {
+        req.flash('error', 'Your not an author of that review');
+        req.redirect('/')
+    }
+    next();
+}
