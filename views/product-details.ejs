@@ -6,6 +6,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <title>Tenzify - <%= product.title %></title>
+	<link rel="stylesheet" href="/css/rating.css">
     <link type="text/css" href="/css/bootstrap.min.css" rel="stylesheet">
     <link type="text/css" href="/css/font-awesome.min.css" rel="stylesheet">
     <link type="text/css" href="/css/prettyPhoto.css" rel="stylesheet">
@@ -134,16 +135,21 @@
 								<span>
 									<span>Rs <%= product.price %> </span>
 									<p><%= product.description %></p>
-									<label>Quantity:</label>
-									<input type="text" value="1" />
-									<button type="button" class="btn btn-fefault cart">
-										<i class="fa fa-shopping-cart"></i>
-										Add to cart
-									</button>
+									<form action="/add-to-cart/<%= product._id %>" method="POST">
+										<label>Quantity:</label>
+										<input class="quantity" name="quantity" type="number" min="1" max="5" value="1">
+										<button type="submit" class="btn btn-fefault cart">
+											<i class="fa fa-shopping-cart"></i>
+											Add to cart
+										</button>
+									</form>
 									<% if(currentUser && product.author.equals(currentUser._id)) {%>
-										<form action="/product/<%= product._id %>/delete?_method=DELETE " method="POST">
-											<button class="btn btn-sm btn-danger"><i class="fa fa-trash-o fa-lg"> Delete</i></button>
-										</form>
+										<div style="display: flex; justify-content: center;">
+											<form action="/product/<%= product._id %>/delete?_method=DELETE " method="POST">
+												<button style="margin-right: 20px;" class="btn btn-sm btn-danger"><i class="fa fa-trash-o fa-lg"> Delete</i></button>
+											</form>
+											<a class="btn btn-sm btn-danger" href="/product/<%= product._id %>/edit">Edit</a>
+										</div>
 										<% } %> 
 								</span>
 								<p><b>Availability:</b> In Stock</p>
@@ -319,13 +325,15 @@
 									<% for(review of product.reviews){ %> 
 									<ul>
 										<li><a href=""><i class="fa fa-user"></i><%= review.name %></a></li>
-										<li><a href=""><i class="fa fa-clock-o"></i>12:41 PM</a></li>
-										<li><a href=""><i class="fa fa-calendar-o"></i>31 DEC 2014</a></li>
+										<!-- <li><a href=""><i class="fa fa-clock-o"></i>12:41 PM</a></li>
+										<li><a href=""><i class="fa fa-calendar-o"></i>31 DEC 2014</a></li> -->
 									</ul>
-									<p>Review - <%= review.body %>. Rating - <%= review.rating %></p>
+									<p class="starability-result" data-rating="<%= review.rating %>">
+									</p>
+									<p>Review - <%= review.body %>.</p>
 									<% if(currentUser && (review.author.equals(currentUser._id) || currentUser.email == 'niranjangowda821@gmail.com')){ %> 
 									<form action="/product-details/<%= product._id %>/review/<%= review._id %>?_method=DELETE" method="POST">
-										<button class="btn btn-sm btn-danger"><i class="fa fa-trash-o fa-lg"> Delete</i></button>
+										<button class="btn btn-sm pull-right"><i class="fa fa-trash-o"></i></button>
 									</form>
 									<% } %> 
 									<% } %> 
@@ -339,7 +347,19 @@
 											<input type="email" placeholder="Email Address" name="review[email]">
 										</span>
 										<textarea name="review[body]" placeholder="Write your review" required></textarea>
-										<b>Rating: </b> <input type="range" min="1" max="5" name="review[rating]" id="">
+										<fieldset class="starability-basic">
+											<input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating." />
+											<input type="radio" id="first-rate1" name="review[rating]" value="1" />
+											<label for="first-rate1" title="Terrible">1 star</label>
+											<input type="radio" id="first-rate2" name="review[rating]" value="2" />
+											<label for="first-rate2" title="Not good">2 stars</label>
+											<input type="radio" id="first-rate3" name="review[rating]" value="3" />
+											<label for="first-rate3" title="Average">3 stars</label>
+											<input type="radio" id="first-rate4" name="review[rating]" value="4" />
+											<label for="first-rate4" title="Very good">4 stars</label>
+											<input type="radio" id="first-rate5" name="review[rating]" value="5" />
+											<label for="first-rate5" title="Amazing">5 stars</label>
+										</fieldset>
 										<button class="btn btn-default pull-right">
 											Submit
 										</button>
@@ -448,6 +468,8 @@
 	</section>
 	<script>
 		const anchors = document.querySelectorAll('.anchors a img');
+		const addCart = document.querySelector('.cart');
+		const quantity = document.querySelector('.quantity');
 		anchors.forEach(anchor=>{
 			anchor.addEventListener('click',e=>{
 				const mainImg = document.querySelector('.display');
@@ -455,6 +477,9 @@
 				anchor.src = mainImg.src;
 				mainImg.src = swap;
 			})
+		})
+		addCart.addEventListener('click',()=>{
+			console.log(quantity.value);
 		})
 	</script>
 	<%- include('partials/footer') %>

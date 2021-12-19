@@ -1,12 +1,14 @@
+if (process.env.NODE_ENV != "production") {
+    require('dotenv').config()
+}
+
 const express = require('express');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
 const ejsMate = require('ejs-mate');
 const path = require('path');
 const methodOverride = require('method-override');
-const multer = require('multer');
 const Product = require('./models/shop.js');
-const { request } = require('http');
 const catchAsync = require('./utils/catchAsync.js');
 const ExpressError = require('./utils/expressError.js');
 const Review = require('./models/review');
@@ -17,9 +19,15 @@ const LocalStrategy = require('passport-local');
 const User = require('./models/user');
 const cookieParser = require('cookie-parser');
 const { isLoggedIn, isAuthor, validateReview, isReviewAuthor } = require('./middleware');
+const MongoStore = require('connect-mongo');
+const Cart = require('./models/cart');
+const multer = require('multer');
+const { storage } = require('./cloudinary');
+const upload = multer({ storage });
 
 
-mongoose.connect('mongodb://localhost:27017/tenzify', { useNewUrlParser: true, useUnifiedTopology: true })
+const db = 'mongodb://localhost:27017/tenzify';
+mongoose.connect(db, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false })
     .then(() => {
         console.log('connected to Database');
     })
@@ -41,11 +49,12 @@ const sessionConfig = {
     secret: "changethislater",
     resave: false,
     saveUninitialized: true,
+    store: MongoStore.create({ mongoUrl: db }),
     cookie: {
         httpOnly: true,
         expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
         maxAge: 1000 * 60 * 60 * 24 * 7,
-    }
+    },
 }
 
 app.use(session(sessionConfig));
@@ -63,24 +72,25 @@ app.use((req, res, next) => {
     res.locals.currentUser = req.user;
     res.locals.error = req.flash('error');
     res.locals.success = req.flash('success');
+    res.locals.cart = req.session.cart;
     next();
 })
 
 //define storage for the image
 
-let storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-        cb(null, './public/images/uploads');
-  },
-  filename: function (req, file, cb) {
-      cb(null, Date.now()+'-'+file.originalname);
-  }
-})
+// let storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//         cb(null, './public/images/uploads');
+//   },
+//   filename: function (req, file, cb) {
+//       cb(null, Date.now()+'-'+file.originalname);
+//   }
+// })
 
 //upload parameter for multer
-const upload = multer({
-    storage: storage
-})
+// const upload = multer({
+//     storage: storage
+// })
 
 app.get('/', async (req, res) => {
     const products = await Product.find();
@@ -95,18 +105,19 @@ app.get('/admin', isLoggedIn, (req, res) => {
     req.flash('error','you are not authorized')
     res.redirect('/');
 })
-app.post("/add-product", isLoggedIn,upload.array('image', 12), catchAsync(async (req, res, next) => {
-    if (!req.body) throw new ExpressError('Invalid Product Data', 500);
-    const files = req.files
-    const product = new Product({
-        title: req.body.title,
-        price: req.body.price,
-        description: req.body.description,
-        author: req.user._id,
-        image: files.map(file => {return file.filename })
-    })    
-    await product.save();
-    res.render('admin');
+app.post("/add-product", isLoggedIn, upload.array('image', 12), catchAsync(async (req, res, next) => {
+    console.log(req.files);
+    // if (!req.body) throw new ExpressError('Invalid Product Data', 500);
+    // const files = req.files
+    // const product = new Product({
+    //     title: req.body.title,
+    //     price: req.body.price,
+    //     description: req.body.description,
+    //     author: req.user._id,
+    //     image: files.map(file => {return file.filename })
+    // })    
+    // await product.save();
+    // res.render('admin');
 }))
 
 //**********REGISTER AND LOGIN*************//
@@ -148,6 +159,23 @@ app.get('/logout', isLoggedIn, (req, res) => {
 app.get('/cart', (req, res) => {
     res.render('cart');
 })
+app.post('/add-to-cart/:id', async (req, res) => {
+    const { id } = req.params;
+    const { quantity } = req.body;
+    const product = await Product.findById(id)
+    const items = {
+        id: product._id.toString(),
+        image: product.image[0],
+        title: product.title,
+        quantity: parseInt(quantity),
+        price: product.price
+    }
+    // delete req.session.cart;
+    const cart = Cart.save(items, req.session.cart ? req.session.cart : null);
+    req.session.cart = cart;
+    console.log("this final cart",cart);
+    res.end('save succesfully');
+})
 
 //**********CHECKOUT*************//
 app.get('/checkout', (req, res) => {
@@ -161,7 +189,7 @@ app.get('/contact-us', (req, res) => {
 })
 
 //*************PRODUCT-DETAILS***************//
-app.get('/product-details/:id', catchAsync( async (req, res) => {
+app.get('/product/:id', catchAsync( async (req, res) => {
     const product = await Product.findById(req.params.id).populate({ path: 'reviews', populate: {path: 'author'}}).populate('author');
     res.render('product-details',{product});
 }))
@@ -170,6 +198,18 @@ app.delete('/product/:id/delete',isLoggedIn,isAuthor, catchAsync(async (req, res
     const { id } = req.params;
     await Product.findByIdAndDelete(id);
     res.redirect(`/`);
+}))
+    //EDIT-PRODUCT//
+app.get('/product/:id/edit', isLoggedIn, isAuthor, catchAsync(async(req, res, next)=> {
+    const { id } = req.params;
+    product = await Product.findById(id);
+    res.render('edit-product', { product });
+}))
+app.put('/product/:id/edit', isLoggedIn, isAuthor, catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    console.log(id)
+    product = await Product.findByIdAndUpdate(id, { ...req.body })
+    res.redirect(`/product/${id}`)
 }))
 
 //***************REVIEWS*****************/

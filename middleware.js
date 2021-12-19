@@ -35,7 +35,7 @@ module.exports.isAuthor = async (req,res,next) => {
 module.exports.isReviewAuthor = async (req, res, next) => {
     const { id,reviewId } = req.params;
     const review = await Review.findById(reviewId);
-    if (!review.author.equals(req.user._id)) {
+    if (review && !review.author.equals(req.user._id)) {
         req.flash('error', 'Your not an author of that review');
         req.redirect('/')
     }

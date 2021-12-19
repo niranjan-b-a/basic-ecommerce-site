@@ -334,6 +334,9 @@ ul.sub-menu{
 .single-widget{
 
 }
+.bill-to .form-one input {
+    width: 20em;
+}
 
 .product-information span {
 	display: block;
